@@ -20,11 +20,8 @@
 ## 安装
 
 ```r
-# 从本地安装
-devtools::install_local("path/to/ecodR")
-
-# 或从 GitHub 安装（待上传）
-# devtools::install_github("yourusername/ecodR")
+#从 GitHub 安装
+devtools::install_github("flystar233/ecodR")
 ```
 
 ## 快速开始
@@ -179,25 +176,6 @@ ECOD 基于以下步骤检测异常：
 - 需要最高精度（考虑 Isolation Forest）
 - 类别特征为主（需要编码）
 - 实时在线学习（考虑 LODA）
-
-## 性能对比
-
-在标准数据集上的 AUC-ROC 对比（更高更好）：
-
-| 数据集 | ECOD | Isolation Forest | LOF |
-|--------|------|------------------|-----|
-| Cardio | 0.912 | 0.931 | 0.887 |
-| Thyroid | 0.931 | 0.946 | 0.902 |
-| Satellite | 0.723 | 0.741 | 0.695 |
-| **平均** | **0.889** | **0.906** | **0.861** |
-
-速度对比（10,000 样本 × 10 特征）：
-
-| 方法 | 时间 |
-|------|------|
-| ECOD | 10 ms ⚡⚡⚡ |
-| Isolation Forest | 500 ms ⚡⚡ |
-| LOF | 2000 ms ⚡ |
 
 ## 参考文献
 
