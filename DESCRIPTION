@@ -1,0 +1,31 @@
+Package: ecodR
+Type: Package
+Title: Empirical Cumulative Distribution-Based Outlier Detection
+Version: 0.1.0
+Authors@R: 
+    person("Your", "Name", email = "your.email@example.com", role = c("aut", "cre"))
+Description: Implements the ECOD (Empirical Cumulative Distribution-Based Outlier 
+    Detection) algorithm for fast and parameter-free anomaly detection. ECOD uses 
+    empirical cumulative distribution functions to compute tail probabilities for 
+    each feature and aggregates them to identify outliers. The method is extremely 
+    fast, requires no parameter tuning, and provides interpretable results through 
+    feature-level tail probabilities.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
+Depends: 
+    R (>= 3.5.0)
+Imports:
+    stats,
+    graphics
+Suggests:
+    ggplot2,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    pROC
+VignetteBuilder: knitr
+URL: https://github.com/yourusername/ecodR
+BugReports: https://github.com/yourusername/ecodR/issues
+
