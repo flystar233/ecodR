@@ -206,7 +206,7 @@ ecod <- function(data, normalize = FALSE) {
     class = "ecod"
   )
 
-  return(result)
+  result
 }
 
 
@@ -258,7 +258,6 @@ predict.ecod <- function(object, newdata, X_train, ...) {
     stop("'X_train' must have ", object$n_features, " features")
   }
 
-  n_new <- nrow(newdata)
   d <- ncol(newdata)
 
   # Compute tail probabilities for new data
@@ -280,7 +279,7 @@ predict.ecod <- function(object, newdata, X_train, ...) {
   # Compute anomaly scores
   anomaly_scores_new <- -rowSums(log(tail_probs_new))
 
-  return(as.vector(anomaly_scores_new))
+  as.vector(anomaly_scores_new)
 }
 
 
@@ -343,4 +342,3 @@ summary.ecod <- function(object, ...) {
 
   invisible(object)
 }
-

@@ -174,12 +174,12 @@ feature_contributions <- function(object, sample_id, as_dataframe = TRUE) {
     result <- result[order(result$contribution, decreasing = TRUE), ]
     rownames(result) <- NULL
 
-    return(result)
+    result
   } else {
     # Return as named vector (backward compatibility)
     names(contributions) <- feature_names
     contributions <- sort(contributions, decreasing = TRUE)
-    return(contributions)
+    contributions
   }
 }
 
@@ -248,9 +248,9 @@ get_outliers <- function(object, threshold = "auto", return_indices = FALSE) {
   is_outlier <- object$scores > threshold_value
 
   if (return_indices) {
-    return(which(is_outlier))
+    which(is_outlier)
   } else {
-    return(is_outlier)
+    is_outlier
   }
 }
 
