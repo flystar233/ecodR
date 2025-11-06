@@ -4,7 +4,7 @@
 \alias{plot.ecod}
 \title{Plot Method for ECOD Objects}
 \usage{
-\method{plot}{ecod}(x, type = c("scores", "ranked", "features"), 
+\method{plot}{ecod}(x, type = c("scores", "ranked", "features"),
                     threshold = NULL, top_n = 10, ...)
 }
 \arguments{
@@ -20,7 +20,8 @@
 \item{threshold}{Numeric. Threshold for marking outliers. If NULL (default),
 uses the 95th percentile.}
 
-\item{top_n}{Integer. For type="features", number of top anomalous samples to show.}
+\item{top_n}{Integer. For type="features", number of top anomalous
+samples to show.}
 
 \item{...}{Additional arguments passed to plotting functions.}
 }

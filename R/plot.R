@@ -12,7 +12,8 @@
 #'   }
 #' @param threshold Numeric. Threshold for marking outliers. If NULL (default),
 #'   uses the 95th percentile.
-#' @param top_n Integer. For type="features", number of top anomalous samples to show.
+#' @param top_n Integer. For type="features", number of top anomalous
+#'   samples to show.
 #' @param ... Additional arguments passed to plotting functions.
 #'
 #' @examples
@@ -22,16 +23,16 @@
 #' plot(model, type = "features", top_n = 10)
 #'
 #' @export
-plot.ecod <- function(x, type = c("scores", "ranked", "features"), 
+plot.ecod <- function(x, type = c("scores", "ranked", "features"),
                       threshold = NULL, top_n = 10, ...) {
-  
+
   type <- match.arg(type)
-  
+
   # Set default threshold
   if (is.null(threshold)) {
     threshold <- quantile(x$scores, 0.95)
   }
-  
+
   if (type == "scores") {
     # Histogram of anomaly scores
     hist(x$scores,
@@ -43,15 +44,15 @@ plot.ecod <- function(x, type = c("scores", "ranked", "features"),
          border = "white",
          ...)
     abline(v = threshold, col = "red", lwd = 2, lty = 2)
-    legend("topright", 
+    legend("topright",
            legend = c(paste0("Threshold (", round(threshold, 2), ")")),
            col = "red", lty = 2, lwd = 2)
-    
+
   } else if (type == "ranked") {
     # Ranked plot
     sorted_scores <- sort(x$scores, decreasing = FALSE)
     is_outlier <- sorted_scores > threshold
-    
+
     plot(seq_along(sorted_scores), sorted_scores,
          type = "h",
          col = ifelse(is_outlier, "red", "blue"),
@@ -61,41 +62,45 @@ plot.ecod <- function(x, type = c("scores", "ranked", "features"),
          ylab = "Anomaly Score",
          ...)
     abline(h = threshold, col = "red", lwd = 2, lty = 2)
-    
+
     n_outliers <- sum(is_outlier)
     legend("topleft",
-           legend = c("Normal", "Outlier", paste0("Threshold (n=", n_outliers, ")")),
+           legend = c("Normal", "Outlier",
+                      paste0("Threshold (n=", n_outliers, ")")),
            col = c("blue", "red", "red"),
            lty = c(1, 1, 2),
            lwd = 2)
-    
+
   } else if (type == "features") {
     # Feature contribution heatmap
-    top_idx <- order(x$scores, decreasing = TRUE)[seq_len(min(top_n, x$n_samples))]
-    
+    top_idx <- order(x$scores, decreasing = TRUE)[
+      seq_len(min(top_n, x$n_samples))
+    ]
+
     # Compute feature contributions (-log of tail probs)
     contributions <- -log(x$tail_probs[top_idx, , drop = FALSE])
-    
+
     # Create heatmap
     par(mar = c(5, 8, 4, 2))
     image(t(contributions),
           col = hcl.colors(12, "YlOrRd", rev = TRUE),
           xlab = "Feature",
           ylab = "",
-          main = paste("Feature Contributions (Top", length(top_idx), "Outliers)"),
+          main = paste("Feature Contributions (Top",
+                       length(top_idx), "Outliers)"),
           axes = FALSE,
           ...)
-    
+
     # Add axes
     axis(1, at = seq(0, 1, length.out = x$n_features),
          labels = x$feature_names, las = 2)
     axis(2, at = seq(0, 1, length.out = length(top_idx)),
          labels = paste("Sample", top_idx), las = 1)
-    
+
     # Add color bar legend
     par(mar = c(5, 4, 4, 2))
   }
-  
+
   invisible(x)
 }
 
@@ -116,45 +121,46 @@ plot.ecod <- function(x, type = c("scores", "ranked", "features"),
 #' \item{feature}{Feature name}
 #' \item{tail_probability}{Tail probability (closer to 0 = more extreme)}
 #' \item{contribution}{Contribution score (-log of tail probability)}
-#' 
+#'
 #' If as_dataframe=FALSE, a named numeric vector of contributions,
 #' sorted in decreasing order.
 #'
 #' @examples
 #' model <- ecod(iris[, 1:4])
-#' 
+#'
 #' # Get contributions as data frame (default)
 #' most_anomalous <- which.max(model$scores)
 #' contributions <- feature_contributions(model, most_anomalous)
 #' print(contributions)
-#' 
+#'
 #' # Get as vector (old behavior)
-#' contrib_vector <- feature_contributions(model, most_anomalous, as_dataframe = FALSE)
-#' 
+#' contrib_vector <- feature_contributions(model, most_anomalous,
+#'                                         as_dataframe = FALSE)
+#'
 #' # Visualize
-#' barplot(contributions$contribution, 
+#' barplot(contributions$contribution,
 #'         names.arg = contributions$feature,
 #'         las = 2, col = "steelblue",
 #'         main = paste("Feature Contributions - Sample", most_anomalous))
 #'
 #' @export
 feature_contributions <- function(object, sample_id, as_dataframe = TRUE) {
-  
+
   if (!inherits(object, "ecod")) {
     stop("'object' must be of class 'ecod'")
   }
-  
+
   if (sample_id < 1 || sample_id > object$n_samples) {
     stop("'sample_id' must be between 1 and ", object$n_samples)
   }
-  
+
   # Get tail probabilities and feature names
   tail_probs <- object$tail_probs[sample_id, ]
   feature_names <- object$feature_names
-  
+
   # Compute contributions as -log(tail_prob)
   contributions <- -log(tail_probs)
-  
+
   if (as_dataframe) {
     # Create data frame
     result <- data.frame(
@@ -163,11 +169,11 @@ feature_contributions <- function(object, sample_id, as_dataframe = TRUE) {
       contribution = as.numeric(contributions),
       stringsAsFactors = FALSE
     )
-    
+
     # Sort by contribution (decreasing)
     result <- result[order(result$contribution, decreasing = TRUE), ]
     rownames(result) <- NULL
-    
+
     return(result)
   } else {
     # Return as named vector (backward compatibility)
@@ -184,8 +190,9 @@ feature_contributions <- function(object, sample_id, as_dataframe = TRUE) {
 #' Returns indices or logical vector indicating which samples are outliers.
 #'
 #' @param object An ecod object.
-#' @param threshold Numeric threshold or character string. If numeric, samples with
-#'   scores above this value are considered outliers. If character, one of:
+#' @param threshold Numeric threshold or character string. If numeric,
+#'   samples with scores above this value are considered outliers.
+#'   If character, one of:
 #'   \itemize{
 #'     \item "auto" - Uses 95th percentile (default)
 #'     \item A percentile like "0.95", "0.99"
@@ -198,25 +205,25 @@ feature_contributions <- function(object, sample_id, as_dataframe = TRUE) {
 #'
 #' @examples
 #' model <- ecod(iris[, 1:4])
-#' 
+#'
 #' # Get logical vector
 #' is_outlier <- get_outliers(model)
 #' table(is_outlier)
-#' 
+#'
 #' # Get indices
 #' outlier_indices <- get_outliers(model, return_indices = TRUE)
 #' print(outlier_indices)
-#' 
+#'
 #' # Use custom threshold
 #' outliers <- get_outliers(model, threshold = 0.99)
 #'
 #' @export
 get_outliers <- function(object, threshold = "auto", return_indices = FALSE) {
-  
+
   if (!inherits(object, "ecod")) {
     stop("'object' must be of class 'ecod'")
   }
-  
+
   # Determine threshold
   if (is.character(threshold)) {
     if (threshold == "auto") {
@@ -224,7 +231,10 @@ get_outliers <- function(object, threshold = "auto", return_indices = FALSE) {
     } else {
       percentile <- as.numeric(threshold)
       if (is.na(percentile) || percentile <= 0 || percentile >= 1) {
-        stop("If character, 'threshold' must be 'auto' or a valid percentile string")
+        stop(
+          "If character, 'threshold' must be 'auto' or a valid ",
+          "percentile string"
+        )
       }
       threshold_value <- quantile(object$scores, percentile)
     }
@@ -233,10 +243,10 @@ get_outliers <- function(object, threshold = "auto", return_indices = FALSE) {
   } else {
     stop("'threshold' must be numeric or character")
   }
-  
+
   # Identify outliers
   is_outlier <- object$scores > threshold_value
-  
+
   if (return_indices) {
     return(which(is_outlier))
   } else {

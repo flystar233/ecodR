@@ -7,15 +7,17 @@
 ecod(data, normalize = FALSE)
 }
 \arguments{
-\item{data}{A numeric matrix or data frame. Rows represent samples and columns
-represent features.}
+\item{data}{A numeric matrix or data frame. Rows represent samples
+and columns represent features.}
 
-\item{normalize}{Logical. Whether to standardize the data before computing tail
-probabilities. Default is FALSE as ECOD is scale-invariant.}
+\item{normalize}{Logical. Whether to standardize the data before
+computing tail probabilities. Default is FALSE as ECOD is
+scale-invariant.}
 }
 \value{
 An object of class "ecod" containing:
-\item{scores}{Anomaly scores for each sample. Higher scores indicate more anomalous samples.}
+\item{scores}{Anomaly scores for each sample. Higher scores
+indicate more anomalous samples.}
 \item{tail_probs}{Matrix of tail probabilities for each sample-feature pair.}
 \item{data}{The input data (if retained).}
 \item{n_samples}{Number of samples.}
@@ -83,7 +85,8 @@ model_encoded <- ecod(iris_encoded)
 }
 \references{
 Li, Z., Zhao, Y., Botta, N., Ionescu, C., & Hu, X. (2022).
-ECOD: Unsupervised Outlier Detection Using Empirical Cumulative Distribution Functions.
-IEEE Transactions on Knowledge and Data Engineering.
+ECOD: Unsupervised Outlier Detection Using Empirical Cumulative
+Distribution Functions. IEEE Transactions on Knowledge and Data
+Engineering.
 }
 

@@ -37,10 +37,11 @@ contributions <- feature_contributions(model, most_anomalous)
 print(contributions)
 
 # Get as vector (old behavior)
-contrib_vector <- feature_contributions(model, most_anomalous, as_dataframe = FALSE)
+contrib_vector <- feature_contributions(model, most_anomalous,
+                                        as_dataframe = FALSE)
 
 # Visualize
-barplot(contributions$contribution, 
+barplot(contributions$contribution,
         names.arg = contributions$feature,
         las = 2, col = "steelblue",
         main = paste("Feature Contributions - Sample", most_anomalous))
