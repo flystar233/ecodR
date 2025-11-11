@@ -10,6 +10,10 @@
 #' @param normalize Logical. Whether to standardize the data before
 #'   computing tail probabilities. Default is FALSE as ECOD is
 #'   scale-invariant.
+#' @param use_skewness Logical. Whether to use skewness-aware adjustment
+#'   for asymmetric distributions. When TRUE, the algorithm weighs tail
+#'   probabilities based on feature skewness. Default is FALSE (uses
+#'   simplified symmetric version).
 #'
 #' @return An object of class "ecod" containing:
 #' \item{scores}{Anomaly scores for each sample. Higher scores
@@ -19,6 +23,8 @@
 #' \item{n_samples}{Number of samples.}
 #' \item{n_features}{Number of features.}
 #' \item{feature_names}{Names of features.}
+#' \item{normalized}{Logical indicating if data was normalized.}
+#' \item{use_skewness}{Logical indicating if skewness adjustment was used.}
 #'
 #' @details
 #' ECOD computes the anomaly score as:
@@ -80,8 +86,12 @@
 #' iris_encoded <- model.matrix(~ . - 1, data = iris[, c(1:4, 5)])
 #' model_encoded <- ecod(iris_encoded)
 #'
+#' # Use skewness-aware adjustment for asymmetric distributions
+#' model_skew <- ecod(iris[, 1:4], use_skewness = TRUE)
+#' summary(model_skew$scores)
+#'
 #' @export
-ecod <- function(data, normalize = FALSE) {
+ecod <- function(data, normalize = FALSE, use_skewness = FALSE) {
 
   # Input validation
   if (!is.matrix(data) && !is.data.frame(data)) {
@@ -160,37 +170,46 @@ ecod <- function(data, normalize = FALSE) {
     X <- scale(X)
   }
 
-  # Compute tail probabilities for each feature
-  tail_probs <- sapply(seq_len(d), function(j) {
-    feature <- X[, j]
-
-    # Handle constant features
-    if (sd(feature) == 0) {
-      return(rep(0.5, n))
-    }
-
-    # Compute ranks (average method for ties)
-    ranks <- rank(feature, ties.method = "average")
-
-    # Left tail probability
-    left_tail <- ranks / n
-
-    # Right tail probability
-    right_tail <- 1 - left_tail
-
-    # Return minimum (two-tailed)
-    pmin(left_tail, right_tail)
+  # Compute left and right tail probabilities for each feature
+  epsilon <- .Machine$double.eps
+  left_tail <- sapply(seq_len(d), function(j) {
+    if (sd(X[, j]) == 0) return(rep(0.5, n))
+    rank(X[, j], ties.method = "average") / n
   })
+  right_tail <- 1 - left_tail
 
-  # Set column names
+  # Add epsilon to avoid log(0)
+  left_tail <- pmax(left_tail, epsilon)
+  right_tail <- pmax(right_tail, epsilon)
+
+  # Compute tail probabilities (two-tailed, already >= epsilon)
+  tail_probs <- pmin(left_tail, right_tail)
   colnames(tail_probs) <- feature_names
 
-  # Add small epsilon to avoid log(0)
-  epsilon <- .Machine$double.eps
-  tail_probs <- pmax(tail_probs, epsilon)
+  # Compute anomaly scores
+  if (use_skewness) {
+    # Enhanced version with skewness adjustment
+    U_l <- -log(left_tail)
+    U_r <- -log(right_tail)
 
-  # Compute anomaly scores (negative log-likelihood)
-  anomaly_scores <- -rowSums(log(tail_probs))
+    # Compute skewness for each feature (using moment formula)
+    skewness <- apply(X, 2, function(x) {
+      mean((x - mean(x))^3) / sd(x)^3
+    })
+    
+    # Use threshold to determine if feature is symmetric (|skew| < 0.1)
+    skew_threshold <- 0.1
+    skew_sign <- ifelse(abs(skewness) < skew_threshold, 0, sign(skewness))
+
+    # Skewness-adjusted scores
+    U_skew <- sweep(U_l, 2, -sign(skew_sign - 1), "*") +
+              sweep(U_r, 2, sign(skew_sign + 1), "*")
+
+    anomaly_scores <- rowSums(pmax(U_l, U_r, U_skew))
+  } else {
+    # Simplified version
+    anomaly_scores <- -rowSums(log(tail_probs))
+  }
 
   # Create result object
   result <- structure(
@@ -201,7 +220,8 @@ ecod <- function(data, normalize = FALSE) {
       n_samples = n,
       n_features = d,
       feature_names = feature_names,
-      normalized = normalize
+      normalized = normalize,
+      use_skewness = use_skewness
     ),
     class = "ecod"
   )
@@ -294,7 +314,8 @@ print.ecod <- function(x, ...) {
   cat("==============================\n\n")
   cat("Number of samples:", x$n_samples, "\n")
   cat("Number of features:", x$n_features, "\n")
-  cat("Data normalized:", x$normalized, "\n\n")
+  cat("Data normalized:", x$normalized, "\n")
+  cat("Skewness adjustment:", x$use_skewness, "\n\n")
 
   cat("Anomaly Score Summary:\n")
   print(summary(x$scores))
